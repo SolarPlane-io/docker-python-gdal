@@ -1,4 +1,4 @@
-FROM debian:bookworm
+FROM debian:bookworm-slim
 
 LABEL org.opencontainers.image.authors=andrii.rieznik@pm.me
 LABEL org.opencontainers.image.source=https://github.com/andrii-reznik/docker-python-gdal
