@@ -1,12 +1,12 @@
-FROM debian:bookworm-slim
+FROM python:3.11-slim-bookworm
 
-LABEL org.opencontainers.image.authors=andrii.rieznik@pm.me
-LABEL org.opencontainers.image.source=https://github.com/andrii-reznik/docker-python-gdal
+LABEL org.opencontainers.image.authors=david.beers@solarplane.io,andrii.rieznik@pm.me
+LABEL org.opencontainers.image.source=https://github.com/SolarPlane-io/docker-python-gdal
 LABEL org.opencontainers.image.description="Debian based image with pre-installed GDAL/OGR libraries and Python bindings"
 LABEL org.opencontainers.image.licenses=MIT
 
-ARG PYTHON_VERSION=3.12.4
-ARG GDAL_VERSION=3.9.1
+ARG PYTHON_VERSION=3.11.7
+ARG GDAL_VERSION=3.8.5
 ARG SOURCE_DIR=/usr/local/src/python-gdal
 
 ENV PYENV_ROOT="/usr/local/pyenv"
@@ -38,15 +38,15 @@ RUN \
         libproj-dev \
         swig \
     && rm -rf /var/lib/apt/lists/* \
-    # Install pyenv
-    && git clone https://github.com/pyenv/pyenv.git ${PYENV_ROOT} \
-    && echo 'export PYENV_ROOT=/usr/local/pyenv' >> /root/.bashrc \
-    && echo 'export PATH=/usr/local/pyenv/bin:$PATH' >> /root/.bashrc \
-    && echo 'eval "$(pyenv init -)"' >> /root/.bashrc \
-    && eval "$(pyenv init -)" && pyenv install ${PYTHON_VERSION} \
-    && eval "$(pyenv init -)" && pyenv global ${PYTHON_VERSION} \
-    && eval "$(pyenv init -)" && pip install --upgrade pip \
-    && eval "$(pyenv init -)" && pip install numpy setuptools \
+    # DON'T Install pyenv
+#    && git clone https://github.com/pyenv/pyenv.git ${PYENV_ROOT} \
+#    && echo 'export PYENV_ROOT=/usr/local/pyenv' >> /root/.bashrc \
+#    && echo 'export PATH=/usr/local/pyenv/bin:$PATH' >> /root/.bashrc \
+#    && echo 'eval "$(pyenv init -)"' >> /root/.bashrc \
+#    && eval "$(pyenv init -)" && pyenv install ${PYTHON_VERSION} \
+#    && eval "$(pyenv init -)" && pyenv global ${PYTHON_VERSION} \
+#    && eval "$(pyenv init -)" && pip install --upgrade pip \
+#    && eval "$(pyenv init -)" && pip install numpy setuptools \
     # Install GDAL
     && export CMAKE_BUILD_PARALLEL_LEVEL=`nproc --all` \
     && mkdir -p "${SOURCE_DIR}" \
@@ -61,7 +61,7 @@ RUN \
         -DCMAKE_BUILD_TYPE=Release \
         -DPYTHON_INCLUDE_DIR=`python -c "import sysconfig; print(sysconfig.get_path('include'))"` \
         -DPYTHON_LIBRARY=`python -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))"` \
-        -DGDAL_PYTHON_INSTALL_PREFIX=`pyenv prefix` \
+        -DGDAL_PYTHON_INSTALL_PREFIX=`python -c "import sysconfig; print(sysconfig.get_config_var('prefix'))"` \
     && cmake --build . \
     && cmake --build . --target install \
     && ldconfig \
@@ -71,5 +71,12 @@ RUN \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf "${SOURCE_DIR}"
+
+# Install aws-lambda-cpp build dependencies
+RUN apt-get update && \
+  apt-get install -y \
+  make \
+  unzip \
+  libcurl4-openssl-dev
 
 CMD python -V && pip -V && gdalinfo --version
