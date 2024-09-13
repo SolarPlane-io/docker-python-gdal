@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bookworm
+FROM debian:bookworm-slim
 
 LABEL org.opencontainers.image.authors=david.beers@solarplane.io,andrii.rieznik@pm.me
 LABEL org.opencontainers.image.source=https://github.com/SolarPlane-io/docker-python-gdal
@@ -38,15 +38,15 @@ RUN \
         libproj-dev \
         swig \
     && rm -rf /var/lib/apt/lists/* \
-    # DON'T Install pyenv
-#    && git clone https://github.com/pyenv/pyenv.git ${PYENV_ROOT} \
-#    && echo 'export PYENV_ROOT=/usr/local/pyenv' >> /root/.bashrc \
-#    && echo 'export PATH=/usr/local/pyenv/bin:$PATH' >> /root/.bashrc \
-#    && echo 'eval "$(pyenv init -)"' >> /root/.bashrc \
-#    && eval "$(pyenv init -)" && pyenv install ${PYTHON_VERSION} \
-#    && eval "$(pyenv init -)" && pyenv global ${PYTHON_VERSION} \
-#    && eval "$(pyenv init -)" && pip install --upgrade pip \
-#    && eval "$(pyenv init -)" && pip install numpy setuptools \
+    # Install pyenv
+    && git clone https://github.com/pyenv/pyenv.git ${PYENV_ROOT} \
+    && echo 'export PYENV_ROOT=/usr/local/pyenv' >> /root/.bashrc \
+    && echo 'export PATH=/usr/local/pyenv/bin:$PATH' >> /root/.bashrc \
+    && echo 'eval "$(pyenv init -)"' >> /root/.bashrc \
+    && eval "$(pyenv init -)" && pyenv install ${PYTHON_VERSION} \
+    && eval "$(pyenv init -)" && pyenv global ${PYTHON_VERSION} \
+    && eval "$(pyenv init -)" && pip install --upgrade pip \
+    && eval "$(pyenv init -)" && pip install numpy setuptools \
     # Install GDAL
     && export CMAKE_BUILD_PARALLEL_LEVEL=`nproc --all` \
     && mkdir -p "${SOURCE_DIR}" \
@@ -74,9 +74,9 @@ RUN \
 
 # Install aws-lambda-cpp build dependencies
 RUN apt-get update && \
-  apt-get install -y \
-  make \
-  unzip \
-  libcurl4-openssl-dev
+    apt-get install -y \
+    make \
+    unzip \
+    libcurl4-openssl-dev
 
 CMD python -V && pip -V && gdalinfo --version
